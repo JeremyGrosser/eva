@@ -1,0 +1,7 @@
+/obj/
+/bin/
+/alire/
+/config/
+gnatcov_out
+*.srctrace
+inject_fail.so

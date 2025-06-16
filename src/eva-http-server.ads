@@ -3,6 +3,8 @@
 --
 --  SPDX-License-Identifier: BSD-3-Clause
 --
+with Eva.Sockets;
+
 generic
    with procedure Handle_Request
       (Req  : Eva.HTTP.Request;
@@ -10,6 +12,7 @@ generic
 package Eva.HTTP.Server
    with Elaborate_Body
 is
-   procedure Run;
+   procedure Run
+      (Port : Eva.Sockets.Inet_Port := 9999);
    procedure Stop;
 end Eva.HTTP.Server;

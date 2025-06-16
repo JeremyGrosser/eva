@@ -242,10 +242,11 @@ package body Eva.HTTP.Server is
    end On_Client_Writable;
 
    procedure Bind
-      (Server : Any_Server_Context)
+      (Server : Any_Server_Context;
+       Port   : Inet_Port)
    is
       Addr : constant Sock_Addr :=
-         (Port   => 9999,
+         (Port   => Port,
           others => <>);
    begin
       Create_Socket (Server.Listen_Sock);
@@ -267,13 +268,15 @@ package body Eva.HTTP.Server is
       Running := False;
    end Stop;
 
-   procedure Run is
+   procedure Run
+      (Port : Eva.Sockets.Inet_Port := 9999)
+   is
       use Ada.Real_Time;
       Next_Tick : Time := Clock;
       Server : aliased Server_Context;
    begin
       Socket_IO.Initialize (Server.IOC);
-      Bind (Server'Unrestricted_Access);
+      Bind (Server'Unrestricted_Access, Port);
 
       while Running loop
          Socket_IO.Poll (Server.IOC);

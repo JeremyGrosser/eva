@@ -85,11 +85,13 @@ package body Workers is
       end Runner;
 
       package Env renames Ada.Environment_Variables;
-      Test_Duration : Duration := 5.0;
+      Test_Duration : Duration;
    begin
       Test_Strings;
       if Env.Exists ("TEST_DURATION") then
          Test_Duration := Duration'Value (Env.Value ("TEST_DURATION"));
+      else
+         Test_Duration := Duration'Last;
       end if;
       delay Test_Duration;
       Test_Server.Stop;

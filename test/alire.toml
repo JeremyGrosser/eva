@@ -18,8 +18,8 @@ gnatcov = "^22.0.1"
 [[pins]]
 eva = { path='..' }
 
-#[build-profiles]
-#"*" = "validation"
+[build-profiles]
+"*" = "validation"
 
 #[build-switches]
 #release.optimization = ["-O3", "-gnatn2"]

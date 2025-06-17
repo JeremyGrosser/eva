@@ -43,10 +43,16 @@ is
       with Convention => C;
 
    type Socket_Option is
-      (Reuse_Address, Reuse_Port);
+      (Reuse_Address, Keep_Alive, Reuse_Port);
    for Socket_Option use
       (Reuse_Address => 2,
-       Reuse_Port => 15);
+       Keep_Alive    => 9,
+       Reuse_Port    => 15);
+
+   type TCP_Option is
+      (No_Delay);
+   for TCP_Option use
+      (No_Delay => 1);
 
    procedure Create_Socket
       (Sock : out Socket_Type);
@@ -54,6 +60,10 @@ is
    procedure Set_Socket_Option
       (Sock   : Socket_Type;
        Option : Socket_Option);
+
+   procedure Set_TCP_Option
+      (Sock   : Socket_Type;
+       Option : TCP_Option);
 
    procedure Bind_Socket
       (Sock : Socket_Type;

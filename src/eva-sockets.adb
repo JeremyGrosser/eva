@@ -18,6 +18,18 @@ package body Eva.Sockets is
       return Inet_Port
    with Import, Convention => C, External_Name => "htons";
 
+   SOL_SOCKET  : constant := 1;
+   IPPROTO_TCP : constant := 6;
+
+   function C_setsockopt
+      (sockfd  : Socket_Type;
+       level   : int;
+       optname : int;
+       optval  : System.Address;
+       optlen  : size_t)
+       return int
+   with Import, Convention => C, External_Name => "setsockopt";
+
    procedure Create_Socket
       (Sock : out Socket_Type)
    is
@@ -34,17 +46,6 @@ package body Eva.Sockets is
       (Sock   : Socket_Type;
        Option : Socket_Option)
    is
-      SOL_SOCKET : constant := 1;
-
-      function C_setsockopt
-         (sockfd  : Socket_Type;
-          level   : int;
-          optname : int;
-          optval  : System.Address;
-          optlen  : size_t)
-          return int
-      with Import, Convention => C, External_Name => "setsockopt";
-
       Val : aliased constant int := 1;
       Result : int;
    begin
@@ -58,6 +59,24 @@ package body Eva.Sockets is
          raise Socket_Error with GNAT.OS_Lib.Errno_Message;
       end if;
    end Set_Socket_Option;
+
+   procedure Set_TCP_Option
+      (Sock   : Socket_Type;
+       Option : TCP_Option)
+   is
+      Val : aliased constant int := 1;
+      Result : int;
+   begin
+      Result := C_setsockopt
+         (sockfd  => Sock,
+          level   => IPPROTO_TCP,
+          optname => int (TCP_Option'Enum_Rep (Option)),
+          optval  => Val'Address,
+          optlen  => size_t (Val'Size / 8));
+      if Result < 0 then
+         raise Socket_Error with GNAT.OS_Lib.Errno_Message;
+      end if;
+   end Set_TCP_Option;
 
    procedure Bind_Socket
       (Sock : Socket_Type;

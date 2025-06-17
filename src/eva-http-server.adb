@@ -88,7 +88,6 @@ package body Eva.HTTP.Server is
       Addr : Sock_Addr;
    begin
       Accept_Socket (Listen_Sock, Sock, Addr);
-      Set_Socket_Option (Sock, Keep_Alive);
       Set_TCP_Option (Sock, No_Delay);
 
       if not Session_Maps.Contains (Context.Sessions, Sock) then

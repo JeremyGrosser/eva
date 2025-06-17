@@ -75,6 +75,11 @@ wait_exit
 TEST_DURATION=0.1 MOCK_FAIL=setsockopt LD_PRELOAD=./inject_fail.so bin/test
 expect 1
 
+TEST_DURATION=0.1 MOCK_FAIL=setsockopt:3 LD_PRELOAD=./inject_fail.so bin/test &
+curl --silent http://localhost:9999/version >/dev/null
+expect 56
+wait_exit
+
 TEST_DURATION=0.1 MOCK_FAIL=bind LD_PRELOAD=./inject_fail.so bin/test
 expect 1
 

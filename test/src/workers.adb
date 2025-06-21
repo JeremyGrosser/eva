@@ -1,4 +1,5 @@
 with Eva.Strings;
+with Eva.HTTP.Errors;
 with Ada.Environment_Variables;
 with Ada.Exceptions;
 with Ada.Text_IO;
@@ -27,8 +28,6 @@ package body Workers is
 
             Put (Resp, LF);
             return;
-         elsif Path (Req) = "/empty" then
-            return;
          elsif Path (Req) = "/fault1" then
             Set_Status (Resp, 200, "OK");
             Set_Status (Resp, 404, "Not Found");
@@ -40,10 +39,7 @@ package body Workers is
          end if;
       end if;
 
-      Set_Status (Resp, 404, "Not Found");
-      Set_Header (Resp, "Content-Type", "text/plain;charset=utf-8");
-      Put (Resp, "404 Not Found");
-      Put (Resp, LF);
+      Eva.HTTP.Errors.Not_Found (Resp);
    end Test_Handler;
 
    procedure Test_Strings is

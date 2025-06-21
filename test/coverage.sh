@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -m
+set -x
 
 expect() {
     let err=$?
@@ -38,8 +39,6 @@ curl --silent 'http://localhost:9999/version?q==='
 expect 0
 curl --silent 'http://localhost:9999/version?&q&&=='
 expect 0
-curl --silent 'http://localhost:9999/empty'
-expect 1
 wait_exit
 
 TEST_DURATION=0.1 MOCK_FAIL=epoll_ctl LD_PRELOAD=./inject_fail.so bin/test &

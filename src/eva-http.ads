@@ -25,11 +25,20 @@ is
       (This : Request)
       return String;
 
+   function Header
+      (This : Request;
+       Name : String)
+       return String;
+
    function Query_Parameter
       (This    : Request;
        Key     : String;
        Default : String := "")
        return String;
+
+   function Data
+      (This : Request)
+      return String;
 
    type Response is private;
 
@@ -70,6 +79,8 @@ private
        Equivalent_Keys  => Ada.Strings.Equal_Case_Insensitive,
        Hash             => Ada.Strings.Hash_Case_Insensitive);
 
+   package Response_Buffers renames Ada.Strings.Unbounded;
+
    type Request is record
       Item        : String (1 .. Max_Request_Length);
       Last        : Natural := 0;
@@ -79,8 +90,6 @@ private
       Protocol    : Span := (0, 0);
       Headers     : Request_Header_Maps.Map := Request_Header_Maps.Empty_Map;
    end record;
-
-   package Response_Buffers renames Ada.Strings.Unbounded;
 
    type Response is record
       Socket   : Eva.Sockets.Socket_Type := 0;

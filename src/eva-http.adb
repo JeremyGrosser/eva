@@ -40,6 +40,20 @@ package body Eva.HTTP is
       return URI.Normalize_Path (Target (Target'First .. Last));
    end Path;
 
+   function Header
+      (This : Request;
+       Name : String)
+       return String
+   is
+      use Request_Header_Maps;
+   begin
+      if Contains (This.Headers, Name) then
+         return Get_String (This, Element (This.Headers, Name));
+      else
+         return "";
+      end if;
+   end Header;
+
    function Query_Parameter
       (This    : Request;
        Key     : String;
@@ -72,6 +86,11 @@ package body Eva.HTTP is
       end loop;
       return Default;
    end Query_Parameter;
+
+   function Data
+      (This : Request)
+      return String
+   is (This.Item (This.End_Headers + 2 .. This.Last));
 
    procedure Set_Header
       (This : in out Response;

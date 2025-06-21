@@ -14,6 +14,8 @@ with Eva.Sockets; use Eva.Sockets;
 with Eva.Epoll;
 
 package body Eva.HTTP.Server is
+   Request_Timeout : constant := 5;
+
    type Server_Context;
    type Any_Server_Context is access all Server_Context;
 
@@ -43,8 +45,6 @@ package body Eva.HTTP.Server is
        On_Writable  => On_Client_Writable,
        On_Readable  => On_Readable,
        On_Error     => On_Error);
-
-   Request_Timeout : constant := 5;
 
    type Session_Type is record
       Req    : Request := (others => <>);
@@ -134,10 +134,12 @@ package body Eva.HTTP.Server is
 
       Handle_Request (Session.Req, Session.Resp);
 
-      Set_Header (Session.Resp,
-         Key   => "Content-Length",
-         Value => Eva.Strings.To_String
-            (Payload_Length (Session.Resp)));
+      if Payload_Length (Session.Resp) > 0 then
+         Set_Header (Session.Resp,
+            Key   => "Content-Length",
+            Value => Eva.Strings.To_String
+               (Payload_Length (Session.Resp)));
+      end if;
 
       if not Is_Empty (Session.Resp) then
          Socket_IO.Set_Triggers

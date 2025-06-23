@@ -24,6 +24,8 @@ gcc -shared -fPIC -o inject_fail.so inject_fail.c -ldl
 alr build --validation && alr gnatcov instrument --level=stmt+mcdc --dump-trigger=atexit --projects=test.gpr
 alr build --validation -- --src-subdirs=gnatcov-instr --implicit-with=gnatcov_rts_full.gpr
 
+ulimit -n 65536
+
 TEST_DURATION=5.0 bin/test & 
 hey -c 100 -z 1s http://localhost:9999/version
 expect 0

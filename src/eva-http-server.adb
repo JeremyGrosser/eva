@@ -11,9 +11,10 @@ with Ada.Containers.Ordered_Maps;
 with Eva.IO;
 with Eva.Sockets; use Eva.Sockets;
 with Eva.Epoll;
+with Eva.Timers;
 
 package body Eva.HTTP.Server is
-   Request_Timeout : constant := 5;
+   Request_Timeout : constant Ada.Real_Time.Time_Span := Ada.Real_Time.Seconds (5);
 
    type Server_Context;
    type Any_Server_Context is access all Server_Context;
@@ -38,11 +39,22 @@ package body Eva.HTTP.Server is
        On_Readable  => On_Readable,
        On_Error     => On_Error);
 
+   type Timeout_Context is record
+      Server : Any_Server_Context;
+      Sock   : Socket_Type;
+   end record;
+
+   procedure On_Timeout
+      (Context : Timeout_Context);
+
+   package Context_Timers is new Eva.Timers
+      (Context_Type => Timeout_Context,
+       On_Timeout   => On_Timeout);
+
    type Session_Type is record
       Req     : Request := (others => <>);
       Resp    : Response := (others => <>);
-      Active  : Boolean := False;
-      Timeout : Ada.Real_Time.Time := Ada.Real_Time.Time_First;
+      Timeout : Ada.Real_Time.Time := Ada.Real_Time.Time_Last;
    end record;
 
    use type Eva.Sockets.Socket_Type;
@@ -52,18 +64,51 @@ package body Eva.HTTP.Server is
 
    type Server_Context is record
       Sessions    : Session_Maps.Map := Session_Maps.Empty_Map;
+      Timers      : Context_Timers.Timers;
       IOC         : Socket_IO.IO_Context;
       Listen_Sock : Socket_Type;
    end record;
+
+   procedure Set_Timeout
+      (Context : Any_Server_Context;
+       Sock    : Socket_Type;
+       After   : Ada.Real_Time.Time_Span)
+   is
+      use Ada.Real_Time;
+      Session : constant Session_Maps.Reference_Type := Session_Maps.Reference (Context.Sessions, Sock);
+      Deadline : constant Time := Clock + After;
+   begin
+      Session.Timeout := Deadline;
+      Context_Timers.Set_Timeout (Context.Timers, Deadline, (Context, Sock));
+   end Set_Timeout;
 
    procedure Close
       (Session : in out Session_Type;
        Sock    : Socket_Type)
    is
    begin
-      Session.Active := False;
       Close_Socket (Sock);
+      Session.Timeout := Ada.Real_Time.Time_Last;
    end Close;
+
+   procedure On_Timeout
+      (Context : Timeout_Context)
+   is
+   begin
+      if not Session_Maps.Contains (Context.Server.Sessions, Context.Sock) then
+         return;
+      end if;
+
+      declare
+         use Ada.Real_Time;
+         Session : constant Session_Maps.Reference_Type := Session_Maps.Reference
+            (Context.Server.Sessions, Context.Sock);
+      begin
+         if Clock >= Session.Timeout then
+            Close (Session, Context.Sock);
+         end if;
+      end;
+   end On_Timeout;
 
    procedure On_Error
       (Sock    : Socket_Type;
@@ -94,14 +139,13 @@ package body Eva.HTTP.Server is
       end if;
 
       declare
-         use Ada.Real_Time;
          Session : constant Session_Maps.Reference_Type := Session_Maps.Reference (Context.Sessions, Sock);
       begin
          Reset (Session.Req);
          Reset (Session.Resp);
-         Session.Timeout := Clock + Seconds (Request_Timeout);
-         Session.Active := True;
       end;
+
+      Set_Timeout (Context, Sock, Request_Timeout);
 
       Socket_IO.Register
          (This       => Context.IOC,
@@ -221,6 +265,7 @@ package body Eva.HTTP.Server is
                 Readable   => True,
                 Writable   => False,
                 One_Shot   => True);
+            Set_Timeout (Context, Sock, Request_Timeout);
          else
             Socket_IO.Set_Triggers
                (This       => Context.IOC,
@@ -268,8 +313,6 @@ package body Eva.HTTP.Server is
    procedure Run
       (Port : Eva.Sockets.Inet_Port := 9999)
    is
-      use Ada.Real_Time;
-      Now : Time;
       Server : aliased Server_Context;
    begin
       Socket_IO.Initialize (Server.IOC);
@@ -277,18 +320,7 @@ package body Eva.HTTP.Server is
 
       while Running loop
          Socket_IO.Poll (Server.IOC);
-         Now := Clock;
-
-         for Cursor in Session_Maps.Iterate (Server.Sessions) loop
-            declare
-               use Session_Maps;
-               S : constant Reference_Type := Reference (Server.Sessions, Cursor);
-            begin
-               if S.Active and then Now >= S.Timeout then
-                  Close (S, Key (Cursor));
-               end if;
-            end;
-         end loop;
+         Context_Timers.Poll (Server.Timers);
       end loop;
 
       Close_Socket (Server.Listen_Sock);

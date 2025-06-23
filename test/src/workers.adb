@@ -19,7 +19,6 @@ package body Workers is
          if Path (Req) = "/version" then
             Set_Status (Resp, 200, "OK");
             Set_Header (Resp, "Content-Type", "text/plain;charset=utf-8");
-
             if Query_Parameter (Req, "q") = "test" then
                Put (Resp, Wide_Wide_Character'Val (16#1F60A#));
             else

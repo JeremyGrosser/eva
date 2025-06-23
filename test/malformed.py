@@ -2,16 +2,33 @@ from socket import *
 
 addr = ('localhost', 9999)
 
+def only_newlines():
+    sock = socket(AF_INET, SOCK_STREAM)
+    sock.connect(addr)
+    sock.sendall(b'\r\n\r\n\r\n\r\n')
+
+def unending():
+    sock = socket(AF_INET, SOCK_STREAM)
+    sock.connect(addr)
+    sock.sendall(b'G' * 256)
+    sock.sendall(b'G' * 4096)
+
 def missing_space_after_method():
     sock = socket(AF_INET, SOCK_STREAM)
     sock.connect(addr)
-    sock.sendall(b'GET/HTTP/1.0\r\n\r\n')
+    sock.sendall(b'GET/ HTTP/1.0\r\n\r\n')
+
+
+def nothing_after_method():
+    sock = socket(AF_INET, SOCK_STREAM)
+    sock.connect(addr)
+    sock.sendall(b'GET \r\n\r\n')
 
 
 def missing_space_after_target():
     sock = socket(AF_INET, SOCK_STREAM)
     sock.connect(addr)
-    sock.sendall(b'GET/ HTTP/1.0\r\n\r\n')
+    sock.sendall(b'GET /\n\n')
 
 
 def send_fragment():
@@ -116,8 +133,18 @@ def constraint_error_trigger():
     sock.sendall(b'GET / HTTP/1.1\r\n' + b'A' * 8000 + b'\r\n\r\n')
 
 
+def client_went_away():
+    sock = socket(AF_INET, SOCK_STREAM)
+    sock.connect(addr)
+    sock.sendall(b'GET / HTTP/1.1\r\n\r\n')
+    sock.close()
+
+
 if __name__ == '__main__':
+    only_newlines()
+    unending()
     missing_space_after_method()
+    nothing_after_method()
     missing_space_after_target()
     send_fragment()
     method_only()
@@ -134,3 +161,4 @@ if __name__ == '__main__':
     empty_line_in_headers()
     header_without_value()
     constraint_error_trigger()
+    client_went_away()

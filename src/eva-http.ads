@@ -85,6 +85,7 @@ private
       Item        : String (1 .. Max_Request_Length);
       Last        : Natural := 0;
       End_Headers : Natural := 0;
+      Start_Data  : Natural := 0;
       Method      : Span := (0, 0);
       Target      : Span := (0, 0);
       Protocol    : Span := (0, 0);

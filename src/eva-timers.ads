@@ -15,11 +15,6 @@ is
        Deadline : Ada.Real_Time.Time;
        Context  : Context_Type);
 
-   procedure Set_Timeout
-      (This    : in out Timers;
-       After   : Ada.Real_Time.Time_Span;
-       Context : Context_Type);
-
    procedure Poll
       (This : in out Timers);
 

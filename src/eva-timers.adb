@@ -12,17 +12,6 @@ package body Eva.Timers is
       Append (Reference (This.M, Deadline), Context);
    end Set_Timeout;
 
-   procedure Set_Timeout
-      (This    : in out Timers;
-       After   : Ada.Real_Time.Time_Span;
-       Context : Context_Type)
-   is
-   begin
-      Set_Timeout (This,
-         Deadline => Clock + After,
-         Context  => Context);
-   end Set_Timeout;
-
    procedure Poll
       (This : in out Timers)
    is

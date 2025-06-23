@@ -90,7 +90,7 @@ package body Eva.HTTP is
    function Data
       (This : Request)
       return String
-   is (This.Item (This.End_Headers + 2 .. This.Last));
+   is (This.Item (This.Start_Data .. This.Last));
 
    procedure Set_Header
       (This : in out Response;
@@ -188,6 +188,7 @@ package body Eva.HTTP is
    begin
       Req.Last := 0;
       Req.End_Headers := 0;
+      Req.Start_Data := 0;
       Request_Header_Maps.Clear (Req.Headers);
    end Reset;
 

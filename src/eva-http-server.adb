@@ -94,21 +94,14 @@ package body Eva.HTTP.Server is
    procedure On_Timeout
       (Context : Timer_Context)
    is
+      use Ada.Real_Time;
+      Session : constant Session_Maps.Reference_Type := Session_Maps.Reference
+         (Context.Server.Sessions, Context.Sock);
    begin
-      if not Session_Maps.Contains (Context.Server.Sessions, Context.Sock) then
-         return;
+      if Clock >= Session.Timeout then
+         Ada.Text_IO.Put_Line ("Timeout");
+         Close (Session, Context.Sock);
       end if;
-
-      declare
-         use Ada.Real_Time;
-         Session : constant Session_Maps.Reference_Type := Session_Maps.Reference
-            (Context.Server.Sessions, Context.Sock);
-      begin
-         if Clock >= Session.Timeout then
-            Ada.Text_IO.Put_Line ("Timeout");
-            Close (Session, Context.Sock);
-         end if;
-      end;
    end On_Timeout;
 
    procedure On_Error

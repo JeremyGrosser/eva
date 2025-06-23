@@ -39,16 +39,16 @@ package body Eva.HTTP.Server is
        On_Readable  => On_Readable,
        On_Error     => On_Error);
 
-   type Timeout_Context is record
+   type Timer_Context is record
       Server : Any_Server_Context;
       Sock   : Socket_Type;
    end record;
 
    procedure On_Timeout
-      (Context : Timeout_Context);
+      (Context : Timer_Context);
 
    package Context_Timers is new Eva.Timers
-      (Context_Type => Timeout_Context,
+      (Context_Type => Timer_Context,
        On_Timeout   => On_Timeout);
 
    type Session_Type is record
@@ -92,7 +92,7 @@ package body Eva.HTTP.Server is
    end Close;
 
    procedure On_Timeout
-      (Context : Timeout_Context)
+      (Context : Timer_Context)
    is
    begin
       if not Session_Maps.Contains (Context.Server.Sessions, Context.Sock) then

@@ -9,7 +9,6 @@ with Ada.Exceptions;
 
 with Ada.Containers.Ordered_Maps;
 with Eva.IO;
-with Eva.Timers;
 with Eva.Sockets; use Eva.Sockets;
 with Eva.Epoll;
 
@@ -20,13 +19,6 @@ package body Eva.HTTP.Server is
    type Any_Server_Context is access all Server_Context;
 
    Running : Boolean := True;
-
-   procedure On_Timeout
-      (Sock : Socket_Type);
-
-   package Socket_Timers is new Eva.Timers
-      (Context_Type => Eva.Sockets.Socket_Type,
-       On_Timeout   => On_Timeout);
 
    procedure On_Readable
       (Sock    : Socket_Type;
@@ -47,8 +39,10 @@ package body Eva.HTTP.Server is
        On_Error     => On_Error);
 
    type Session_Type is record
-      Req    : Request := (others => <>);
-      Resp   : Response := (others => <>);
+      Req     : Request := (others => <>);
+      Resp    : Response := (others => <>);
+      Active  : Boolean := False;
+      Timeout : Ada.Real_Time.Time := Ada.Real_Time.Time_First;
    end record;
 
    use type Eva.Sockets.Socket_Type;
@@ -59,16 +53,17 @@ package body Eva.HTTP.Server is
    type Server_Context is record
       Sessions    : Session_Maps.Map := Session_Maps.Empty_Map;
       IOC         : Socket_IO.IO_Context;
-      Timers      : Socket_Timers.Timer_Wheel;
       Listen_Sock : Socket_Type;
    end record;
 
-   procedure On_Timeout
-      (Sock : Socket_Type)
+   procedure Close
+      (Session : in out Session_Type;
+       Sock    : Socket_Type)
    is
    begin
+      Session.Active := False;
       Close_Socket (Sock);
-   end On_Timeout;
+   end Close;
 
    procedure On_Error
       (Sock    : Socket_Type;
@@ -99,14 +94,13 @@ package body Eva.HTTP.Server is
       end if;
 
       declare
+         use Ada.Real_Time;
          Session : constant Session_Maps.Reference_Type := Session_Maps.Reference (Context.Sessions, Sock);
       begin
          Reset (Session.Req);
          Reset (Session.Resp);
-         Socket_Timers.Set_Timeout
-            (Wheel         => Context.Timers,
-             Timeout_Sec   => Request_Timeout,
-             Context       => Sock);
+         Session.Timeout := Clock + Seconds (Request_Timeout);
+         Session.Active := True;
       end;
 
       Socket_IO.Register
@@ -167,7 +161,7 @@ package body Eva.HTTP.Server is
    begin
       Receive_Socket (Sock, Session.Req.Item (1 .. Session.Req.Item'Last), Last);
       if Last = 0 then
-         Close_Socket (Sock);
+         Close (Session, Sock);
       else
          Session.Req.Last := Session.Req.Last + Last;
          Parse_Request (Session.Req);
@@ -180,12 +174,12 @@ package body Eva.HTTP.Server is
          Ada.Text_IO.Put ("On_Client_Readable Socket_Error: ");
          Ada.Text_IO.Put (Ada.Exceptions.Exception_Message (E));
          Ada.Text_IO.New_Line;
-         Close_Socket (Sock);
+         Close (Session, Sock);
       when E : Parse_Error =>
          Ada.Text_IO.Put ("On_Client_Readable Parse_Error: ");
          Ada.Text_IO.Put (Ada.Exceptions.Exception_Message (E));
          Ada.Text_IO.New_Line;
-         Close_Socket (Sock);
+         Close (Session, Sock);
    end On_Client_Readable;
 
    procedure On_Readable
@@ -214,7 +208,7 @@ package body Eva.HTTP.Server is
       Send_Socket (Sock, Str, Last);
       if Last = 0 then
          --  Client closed connection
-         Close_Socket (Sock);
+         Close (Session, Sock);
       else
          Response_Buffers.Delete (Session.Resp.Buffer, 1, Last);
          if Is_Empty (Session.Resp) then
@@ -241,7 +235,7 @@ package body Eva.HTTP.Server is
          Ada.Text_IO.Put ("On_Client_Writable Socket_Error: ");
          Ada.Text_IO.Put (Ada.Exceptions.Exception_Message (E));
          Ada.Text_IO.New_Line;
-         Close_Socket (Sock);
+         Close (Session, Sock);
    end On_Client_Writable;
 
    procedure Bind
@@ -275,7 +269,7 @@ package body Eva.HTTP.Server is
       (Port : Eva.Sockets.Inet_Port := 9999)
    is
       use Ada.Real_Time;
-      Next_Tick : Time := Clock;
+      Now : Time;
       Server : aliased Server_Context;
    begin
       Socket_IO.Initialize (Server.IOC);
@@ -283,10 +277,18 @@ package body Eva.HTTP.Server is
 
       while Running loop
          Socket_IO.Poll (Server.IOC);
-         if Clock >= Next_Tick then
-            Socket_Timers.Tick (Server.Timers);
-            Next_Tick := Next_Tick + Seconds (1);
-         end if;
+         Now := Clock;
+
+         for Cursor in Session_Maps.Iterate (Server.Sessions) loop
+            declare
+               use Session_Maps;
+               S : constant Reference_Type := Reference (Server.Sessions, Cursor);
+            begin
+               if S.Active and then Now >= S.Timeout then
+                  Close (S, Key (Cursor));
+               end if;
+            end;
+         end loop;
       end loop;
 
       Close_Socket (Server.Listen_Sock);

@@ -99,7 +99,6 @@ package body Eva.HTTP.Server is
          (Context.Server.Sessions, Context.Sock);
    begin
       if Clock >= Session.Timeout then
-         Ada.Text_IO.Put_Line ("Timeout");
          Close (Session, Context.Sock);
       end if;
    end On_Timeout;

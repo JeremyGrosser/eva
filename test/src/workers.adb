@@ -23,6 +23,9 @@ package body Workers is
                Put (Resp, Wide_Wide_Character'Val (16#1F60A#));
             else
                Put (Resp, "1.0.0");
+               Put (Resp, LF);
+               Put (Resp, Decode (UTF8 (Header (Req, "User-Agent"))));
+               Put (Resp, LF);
             end if;
 
             Put (Resp, LF);
@@ -36,6 +39,27 @@ package body Workers is
             Set_Status (Resp, 200, "OK");
             return;
          end if;
+      elsif Method (Req) = "POST" then
+         declare
+            Content_Length : Natural;
+         begin
+            Content_Length := Natural'Value (Header (Req, "Content-Length"));
+            if Data (Req)'Length = Content_Length then
+               Set_Status (Resp, 200, "OK");
+               Set_Header (Resp, "Content-Type", "text/plain;charset=utf-8");
+               Put (Resp, Decode (UTF8 (Data (Req))));
+               return;
+            else
+               return;
+            end if;
+         exception
+            when others =>
+               Eva.HTTP.Errors.Bad_Request (Resp);
+               return;
+         end;
+      else
+         Eva.HTTP.Errors.Method_Not_Allowed (Resp);
+         return;
       end if;
 
       Eva.HTTP.Errors.Not_Found (Resp);

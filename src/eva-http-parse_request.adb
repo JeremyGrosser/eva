@@ -82,6 +82,7 @@ begin
    end if;
    Req.Method := (First, I - 1);
    First := I + 1;
+   I := First;
 
    if not End_Of_Headers then
       Scan_To (' ');
@@ -90,6 +91,7 @@ begin
       end if;
       Req.Target := (First, I - 1);
       First := I + 1;
+      I := First;
    end if;
 
    if not End_Of_Headers then
@@ -100,6 +102,7 @@ begin
       Req.Protocol := (First, I - 1);
       Strip (Req.Protocol, ASCII.CR);
       First := I + 1;
+      I := First;
    end if;
 
    while not End_Of_Headers loop
@@ -112,6 +115,7 @@ begin
          end if;
          Key := (First, I - 1);
          First := I + 1;
+         I := First;
 
          Scan_To (ASCII.LF);
          if I = 0 then
@@ -119,6 +123,7 @@ begin
          end if;
          Value := (First, I - 1);
          First := I + 1;
+         I := First;
 
          Strip (Value, ' ');
          Strip (Value, ASCII.CR);

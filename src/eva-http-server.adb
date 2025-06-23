@@ -105,6 +105,7 @@ package body Eva.HTTP.Server is
             (Context.Server.Sessions, Context.Sock);
       begin
          if Clock >= Session.Timeout then
+            Ada.Text_IO.Put_Line ("Timeout");
             Close (Session, Context.Sock);
          end if;
       end;
@@ -256,16 +257,20 @@ package body Eva.HTTP.Server is
       else
          Response_Buffers.Delete (Session.Resp.Buffer, 1, Last);
          if Is_Empty (Session.Resp) then
-            --  No more data to send, wait for another request
-            Reset (Session.Req);
-            Reset (Session.Resp);
-            Socket_IO.Set_Triggers
-               (This       => Context.IOC,
-                Desc       => Sock,
-                Readable   => True,
-                Writable   => False,
-                One_Shot   => True);
-            Set_Timeout (Context, Sock, Request_Timeout);
+            if Header (Session.Req, "Connection") = "close" then
+               Close (Session, Sock);
+            else
+               --  No more data to send, wait for another request
+               Reset (Session.Req);
+               Reset (Session.Resp);
+               Socket_IO.Set_Triggers
+                  (This       => Context.IOC,
+                   Desc       => Sock,
+                   Readable   => True,
+                   Writable   => False,
+                   One_Shot   => True);
+               Set_Timeout (Context, Sock, Request_Timeout);
+            end if;
          else
             Socket_IO.Set_Triggers
                (This       => Context.IOC,

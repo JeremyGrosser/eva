@@ -28,6 +28,7 @@ package body Eva.IO is
           Writable   => Writable,
           One_Shot   => One_Shot,
           Error      => True,
+          Hang_Up    => True,
           others     => False);
       Event.Data := Interfaces.Unsigned_64 (Desc);
       Epoll.Control (This.EP, Desc, Epoll.Add, Event'Access);

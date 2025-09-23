@@ -5,3 +5,5 @@
 gnatcov_out
 *.srctrace
 inject_fail.so
+server.crt
+server.key

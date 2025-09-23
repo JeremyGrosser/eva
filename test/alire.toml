@@ -30,3 +30,7 @@ LIBRARY_TYPE = "relocatable"
 
 [configuration.values]
 eva.Request_Timeout_Seconds = 1
+
+[[actions]]
+type = "pre-build"
+command = ["./make_testcert.sh"]

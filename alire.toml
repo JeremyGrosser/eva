@@ -1,0 +1,22 @@
+name = "eva"
+description = ""
+version = "1.0.0"
+
+authors = ["Jeremy Grosser"]
+maintainers = ["Jeremy Grosser <jeremy@synack.me>"]
+maintainers-logins = ["JeremyGrosser"]
+licenses = "BSD-3-Clause"
+website = ""
+tags = []
+
+[[depends-on]]
+uri_mime = "^1.4.0"
+tls = "~0.1.0-dev"
+hex_format = "~0.1.0"
+
+[[pins]]
+tls = { url='https://github.com/JeremyGrosser/tls.git' }
+
+[configuration.variables]
+Max_Request_Length = {type = "Integer", first = 1, default = 4096}
+Request_Timeout_Seconds = {type = "Integer", first = 1, default = 70}

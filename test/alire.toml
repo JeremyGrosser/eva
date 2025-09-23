@@ -1,0 +1,32 @@
+name = "test"
+description = ""
+version = "0.1.0-dev"
+
+authors = ["Jeremy Grosser"]
+maintainers = ["Jeremy Grosser <jeremy@synack.me>"]
+maintainers-logins = ["JeremyGrosser"]
+licenses = "BSD-3-Clause"
+website = ""
+tags = []
+
+executables = ["test"]
+
+[[depends-on]]
+eva = "*"
+gnatcov = "^22.0.1"
+
+[[pins]]
+eva = { path='..' }
+
+[build-profiles]
+"*" = "development"
+
+[build-switches]
+#release.optimization = ["-O3", "-gnatn2"]
+development.optimization = ["-O0", "-g"]
+
+[gpr-set-externals]
+LIBRARY_TYPE = "relocatable"
+
+[configuration.values]
+eva.Request_Timeout_Seconds = 1

@@ -317,7 +317,12 @@ package body Eva.Sockets.TLS is
       V : chars_ptr := Null_Ptr;
    begin
       C_eva_get_tls_version (V);
-      return Value (V);
+      declare
+         S : constant String := Value (V);
+      begin
+         Free (V);
+         return S;
+      end;
    end Version;
 
 end Eva.Sockets.TLS;

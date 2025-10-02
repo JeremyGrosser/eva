@@ -75,6 +75,9 @@ package Eva.Sockets.TLS is
    procedure Free
       (Config : in out TLS_Config);
 
+   function Version
+      return String;
+
 private
 
    type TLS_Context_Internal is null record;

@@ -4,6 +4,8 @@
 #include <netinet/tcp.h>
 #include <string.h>
 #include <stdint.h>
+#include <openssl/opensslv.h>
+#include <openssl/crypto.h>
 
 int eva_bind(uint16_t port) {
     struct sockaddr_in6 addr;
@@ -63,4 +65,8 @@ int eva_accept(int listen_sock) {
     }
 
     return sock;
+}
+
+void eva_get_tls_version(const char **ver) {
+    *ver = OpenSSL_version(OPENSSL_VERSION);
 }

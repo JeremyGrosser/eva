@@ -307,4 +307,17 @@ package body Eva.Sockets.TLS is
       Sock := null;
    end Free;
 
+   function Version
+      return String
+   is
+      procedure C_eva_get_tls_version
+         (Str : out chars_ptr)
+      with Import, Convention => C, External_Name => "eva_get_tls_version";
+
+      V : chars_ptr := Null_Ptr;
+   begin
+      C_eva_get_tls_version (V);
+      return Value (V);
+   end Version;
+
 end Eva.Sockets.TLS;

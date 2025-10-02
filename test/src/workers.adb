@@ -7,6 +7,7 @@ pragma Ada_2022;
 with Eva.HTTP.Errors;
 with Eva.HTTP.Server;
 with Eva.HTTP;
+with Eva.Sockets.TLS;
 with Ada.Environment_Variables;
 with Ada.Exceptions;
 with Ada.Text_IO;
@@ -65,6 +66,9 @@ package body Workers is
                Put (Resp, "1.0.0");
                Put (Resp, LF);
                Put (Resp, Header (Req, "User-Agent"));
+               Put (Resp, LF);
+               Put (Resp, "OpenSSL ");
+               Put (Resp, Eva.Sockets.TLS.Version);
                Put (Resp, LF);
             end if;
 

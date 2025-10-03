@@ -311,14 +311,21 @@ package body Eva.Sockets.TLS is
       return String
    is
       function C_eva_get_tls_version
-	 return chars_ptr
+         return chars_ptr
       with Import, Convention => C, External_Name => "eva_get_tls_version";
 
       V : chars_ptr := C_eva_get_tls_version;
-      S : constant String := Value (V);
    begin
-      Free (V);
-      return S;
+      if V = Null_Ptr then
+         return "";
+      else
+         declare
+            S : constant String := Value (V);
+         begin
+            Free (V);
+            return S;
+         end;
+      end if;
    end Version;
 
 end Eva.Sockets.TLS;

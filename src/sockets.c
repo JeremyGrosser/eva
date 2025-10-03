@@ -71,6 +71,9 @@ char *eva_get_tls_version(void) {
     const char *version = OpenSSL_version(OPENSSL_VERSION);
     const char *built_on = OpenSSL_version(OPENSSL_BUILT_ON);
     char *combo = malloc(strlen(version) + strlen(built_on) + 2);
+    if(combo == NULL) {
+        return NULL;
+    }
     sprintf(combo, "%s %s", version, built_on);
     return combo;
 }

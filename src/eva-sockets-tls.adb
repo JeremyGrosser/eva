@@ -310,19 +310,15 @@ package body Eva.Sockets.TLS is
    function Version
       return String
    is
-      procedure C_eva_get_tls_version
-         (Str : out chars_ptr)
+      function C_eva_get_tls_version
+	 return chars_ptr
       with Import, Convention => C, External_Name => "eva_get_tls_version";
 
-      V : chars_ptr := Null_Ptr;
+      V : chars_ptr := C_eva_get_tls_version;
+      S : constant String := Value (V);
    begin
-      C_eva_get_tls_version (V);
-      declare
-         S : constant String := Value (V);
-      begin
-         Free (V);
-         return S;
-      end;
+      Free (V);
+      return S;
    end Version;
 
 end Eva.Sockets.TLS;
